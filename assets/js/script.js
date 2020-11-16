@@ -96,7 +96,7 @@ $(".list-group").on("click", "span", function() {
   // swap elements
   $(this).replaceWith(dateInput);
 
-  dateInput.trigger(focus);
+  dateInput.trigger("focus");
 });
 
 // save new due date
@@ -130,43 +130,91 @@ $(".list-group").on("blur", "input[type='text']", function () {
   $(this).replaceWith(taskSpan);
 });
 
-// modal was triggered
-$("#task-form-modal").on("show.bs.modal", function() {
-  // clear values
-  $("#modalTaskDescription, #modalDueDate").val("");
-});
-// modal is fully visible
-$("#task-form-modal").on("shown.bs.modal", function() {
-  // highlight textarea
-  $("#modalTaskDescription").trigger("focus");
-});
-// save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function() {
-  // get form values
-  var taskText = $("#modalTaskDescription").val();
-  var taskDate = $("#modalDueDate").val();
-  if (taskText && taskDate) {
-    createTask(taskText, taskDate, "toDo");
-    // close modal
-    $("#task-form-modal").modal("hide");
-    // save in tasks array
-    tasks.toDo.push({
-      text: taskText,
-      date: taskDate
-    });
+  // jquery sortable method
+  $(".card .list-group").sortable({
+    connectWith: $(".card .list-group"),
+    scroll: false,
+    tolerance: "pointer",
+    helper: "clone",
+    activate: function(event) {}, 
+    deactivate: function(event) {},
+    over: function(event) {},
+    out: function(event) {},
+    update: function(event) {
+      var tempArr = [];
+  
+      // loop over current set of children in sortable list
+      $(this).children().each(function() {
+        var text = $(this)
+        .find("p")
+        .text()
+        .trim();
+  
+        var date = $(this)
+        .find("span")
+        .text()
+        .trim();
+  
+        tempArr.push({
+          text: text,
+          date: date
+        });
+      });
+      var arrName = $(this)
+      .attr("id")
+      .replace("list-", "");
+  
+      tasks[arrName] = tempArr;
+      saveTasks();
+    }
+  })
+  
+  $("#trash").droppable({
+    accept: ".card .list-group-item",
+    tolerance: "touch", 
+    drop: function(event, ui) {
+      ui.draggable.remove();
+    }, 
+    over: function(event, ui) {},
+    out: function(event,ui) {}
+  });
+  
+  // modal was triggered
+  $("#task-form-modal").on("show.bs.modal", function() {
+    // clear values
+    $("#modalTaskDescription, #modalDueDate").val("");
+  });
+  // modal is fully visible
+  $("#task-form-modal").on("shown.bs.modal", function() {
+    // highlight textarea
+    $("#modalTaskDescription").trigger("focus");
+  });
+  // save button in modal was clicked
+  $("#task-form-modal .btn-primary").click(function() {
+    // get form values
+    var taskText = $("#modalTaskDescription").val();
+    var taskDate = $("#modalDueDate").val();
+    if (taskText && taskDate) {
+      createTask(taskText, taskDate, "toDo");
+      // close modal
+      $("#task-form-modal").modal("hide");
+      // save in tasks array
+      tasks.toDo.push({
+        text: taskText,
+        date: taskDate
+      });
+      saveTasks();
+    }
+  });
+  // remove all tasks
+  $("#remove-tasks").on("click", function() {
+    for (var key in tasks) {
+      tasks[key].length = 0;
+      $("#list-" + key).empty();
+    }
     saveTasks();
-  }
-});
-// remove all tasks
-$("#remove-tasks").on("click", function() {
-  for (var key in tasks) {
-    tasks[key].length = 0;
-    $("#list-" + key).empty();
-  }
-  saveTasks();
-});
-
-// load tasks for the first time
-loadTasks();
+  });
+  // load tasks for the first time
+  loadTasks();
 
 
